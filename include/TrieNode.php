@@ -1,41 +1,41 @@
 <?php
-
-# Basic Trie structure
-class TrieNode
-{
-    protected $word;
-    protected $nodes = array();
-
-    public function addWord($word, $offset)
+if (!class_exists("TrieNode")) {
+    class TrieNode
     {
-        if ($word === null) {
-            $word = "";
+        protected $word;
+        protected $nodes = array();
+
+        public function addWord($word, $offset)
+        {
+            if ($word === null) {
+                $word = "";
+            }
+
+            if ($offset === null) {
+                $offset = 0;
+            }
+
+            if ($offset === (strlen($word))) {
+                $this->word = $word;
+            } else {
+                $node = $this->nodes[$word[$offset]] ?: new static;
+                $node->addWord($word, $offset + 1);
+                $this->nodes[$word[$offset]] = $node;
+            }
+        }
+        public function isWord()
+        {
+            return !!$this->word;
         }
 
-        if ($offset === null) {
-            $offset = 0;
+        public function getNode($letter)
+        {
+            return $this->nodes[$letter];
         }
 
-        if ($offset === (strlen($word))) {
-            $this->word = $word;
-        } else {
-            $node = $this->nodes[$word[$offset]] ?: new static;
-            $node->addWord($word, $offset + 1);
-            $this->nodes[$word[$offset]] = $node;
+        public function getWord()
+        {
+            return $this->word;
         }
-    }
-    public function isWord()
-    {
-        return !!$this->word;
-    }
-
-    public function getNode($letter)
-    {
-        return $this->nodes[$letter];
-    }
-
-    public function getWord()
-    {
-        return $this->word;
     }
 }

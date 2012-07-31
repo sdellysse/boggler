@@ -1,35 +1,8 @@
 <?php
 error_reporting(E_ERROR);
+
 include __DIR__."/include/array_flatten.php";
 include __DIR__."/include/TrieNode.php";
-
-# Input array
-$grid = array(
-    array('s', 't', 'a', 'e'),
-    array('d', 'r', 'p', 's'),
-    array('e', 'i', 'l', 'o'),
-    array('s', 'd', 'n', 'r'),
-);
-$letters = array_unique(array_flatten($grid));
-
-# Eliminate words when possible
-$words = array_filter(
-    array_map("trim", explode("\n", file_get_contents(__DIR__."/words.txt"))),
-    function ($word) use ($letters) {
-        foreach ($letters as $letter) {
-            if (strpos($word, $letter) !== false) {
-                return true;
-            }
-        }
-        return false;
-    }
-);
-
-# Stuff all the words into the trie
-$trie = new TrieNode;
-foreach ($words as $word) {
-    $trie->addWord($word);
-}
 
 # Finds all possible words from a given space, making sure not to backtrack
 #
@@ -70,14 +43,52 @@ function findWords($grid, $parentTrie, $rowIndex, $columnIndex, $visited = array
     return $retval;
 }
 
-# Find all possible words for each space
-$foundWords = array();
-foreach ($grid as $rowIndex => $row) {
-    foreach($row as $columnIndex => $column) {
-        $foundWords = array_merge($foundWords, findWords($grid, $trie, $rowIndex, $columnIndex));
+function boggleSolve($grid, $wordlist)
+{
+    # Eliminate words that contain any characters that are not in the grid
+    $letters = array_unique(array_flatten($grid));
+    $words = array_filter($wordlist, function ($word) use ($letters) {
+        foreach (str_split($word) as $letter) {
+            if (!in_array($letter, $letters)) {
+                return false;
+            }
+        }
+        return true;
+    });
+
+    # Stuff all the words into the trie
+    $trie = new TrieNode;
+    foreach ($words as $word) {
+        $trie->addWord($word);
     }
+
+    # Find all possible words for each space
+    $foundWords = array();
+    foreach ($grid as $rowIndex => $row) {
+        foreach($row as $columnIndex => $column) {
+            $foundWords = array_merge(
+                $foundWords,
+                findWords($grid, $trie, $rowIndex, $columnIndex)
+            );
+        }
+    }
+
+    return array_values(array_unique($foundWords));
 }
 
-$foundWords = array_unique($foundWords);
-sort($foundWords);
-echo implode("\n", $foundWords)."\n";
+# Default Main
+if (!debug_backtrace()) {
+    $grid = array(
+        array('s', 't', 'a', 'e'),
+        array('d', 'r', 'p', 's'),
+        array('e', 'i', 'l', 'o'),
+        array('s', 'd', 'n', 'r'),
+    );
+    $wordlist = array_filter(
+        array_map("trim",
+            explode("\n", file_get_contents(__DIR__."/words.txt"))
+        )
+    );
+
+    echo implode("\n", boggleSolve($grid, $wordlist))."\n";
+}
